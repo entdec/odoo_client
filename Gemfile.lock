@@ -1,0 +1,17 @@
+PATH
+  remote: .
+  specs:
+    odoo_client (0.0.1)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  odoo_client!
+
+BUNDLED WITH
+   1.10.6
