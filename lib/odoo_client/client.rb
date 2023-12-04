@@ -55,7 +55,7 @@ module Odoo
 			optional_params = {fields: select_fields}
 			optional_params[:offset] = offset unless offset.nil?
 			optional_params[:limit] = limit unless limit.nil?
-			models.execute_kw(@db, @uid, @password, model_name, 'search_read', [filters], optional_params)
+			models.execute_kw(@db, @uid, @password, model_name, 'read', [filters], optional_params)
 		end
 
 		def create(model_name, params)
