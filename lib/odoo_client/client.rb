@@ -1,5 +1,4 @@
 require "xmlrpc/client"
-require_relative "filter"
 
 module Odoo
   class Client
