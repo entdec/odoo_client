@@ -3,7 +3,7 @@
 $:.push File.expand_path("../lib", __FILE__)
 
 # Maintain your gem's version:
-require "odoo_client/version"
+require_relative "lib/odoo_client/version"
 
 # Describe your gem and declare its dependencies:
 Gem::Specification.new do |s|
@@ -15,6 +15,8 @@ Gem::Specification.new do |s|
   s.summary = "Pure Ruby Client for Odoo ERP"
   s.description = "Connect to Odoo ERP and perform CRUD operations."
   s.license = "MIT"
+
+  s.require_paths = ['lib'.freeze]
   s.files = Dir["{lib}/**/*", "MIT-LICENSE", "Rakefile", "README.rdoc"]
 
   s.add_runtime_dependency 'xmlrpc', '~> 0.3.3'
