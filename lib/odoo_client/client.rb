@@ -33,12 +33,15 @@ module Odoo
 
     def count(model_name, filters = [])
       filters = convert_filters(filters)
-      models.execute_kw(@db, @uid, @password, model_name, 'search_count', filters, {})
+      result = models.execute_kw(@db, @uid, @password, model_name, 'search_count', filters, {})
+      Response.new(self, {"_model": model_name, "data": result}, optional_params)
     end
 
     def read(model_name, filters = [], optional_params = {})
       filters = [filters] unless filters.is_a?(Array)
-      models.execute_kw(@db, @uid, @password, model_name, 'read', filters, optional_params)
+      optional_params = optional_params.deep_stringify_keys
+      result = models.execute_kw(@db, @uid, @password, model_name, 'read', filters, optional_params)
+      Response.new(self, {"_model": model_name, "data": result}, optional_params)
     end
 
     def create(model_name, params)
@@ -48,25 +51,33 @@ module Odoo
     def update(model_name, record_ids, params, optional_params = {})
       optional_params = optional_params.deep_stringify_keys
       optional_params['context'] = @default_context.merge(optional_params['context'] || {})
-      models.execute_kw(@db, @uid, @password, model_name, 'write', [record_ids, params], optional_params)
+      result = models.execute_kw(@db, @uid, @password, model_name, 'write', [record_ids, params], optional_params)
+      Response.new(self, {"_model": model_name, "data": result}, optional_params)
     end
 
     def delete(model_name, record_ids)
-      models.execute_kw(@db, @uid, @password, model_name, 'unlink', [record_ids])
+      result = models.execute_kw(@db, @uid, @password, model_name, 'unlink', [record_ids])
+      Response.new(self, {"_model": model_name, "data": result})
     end
 
     def model_attributes(model_name, info = ['field_name', 'field_label', 'string', 'help', 'type'])
-      models.execute_kw(@db, @uid, @password, model_name, 'fields_get', [], {'attributes': info})
+      optional_params = {attributes: info}
+      result = models.execute_kw(@db, @uid, @password, model_name, 'fields_get', [], optional_params)
+      Response.new(self, {"_model": model_name, "data": result}, optional_params)
     end
 
     def search(model_name, filters = [], optional_params = {})
       filters = convert_filters(filters)
-      models.execute_kw(@db, @uid, @password, model_name, 'search', [filters], optional_params.deep_stringify_keys)
+      optional_params = optional_params.deep_stringify_keys
+      result = models.execute_kw(@db, @uid, @password, model_name, 'search', [filters], optional_params)
+      Response.new(self, {"_model": model_name, "data": result}, optional_params)
     end
 
     def search_read(model_name, filters = [], optional_params = {})
       filters = convert_filters(filters)
-      models.execute_kw(@db, @uid, @password, model_name, 'search_read', [filters], optional_params.deep_stringify_keys)
+      optional_params = optional_params.deep_stringify_keys
+      result = models.execute_kw(@db, @uid, @password, model_name, 'search_read', [filters], optional_params)
+      Response.new(self, {"_model": model_name, "data": result}, optional_params)
     end
 
     def search_read_all(model_name, filters = [], optional_params: {}, page_size: 100)
@@ -76,8 +87,8 @@ module Odoo
         records = search_read(model_name, filters, optional_params)
         break if records.empty?
 
-        result = yield records
-        break if result == false || result.nil? || records.length < page_size
+        yield Response.new(self, {"_model": model_name, "data": records}, optional_params)
+        break if records.length < page_size
 
         offset += page_size
       end
@@ -85,27 +96,19 @@ module Odoo
 
     def model_ids(model_names)
       operator = model_names.is_a?(Array) ? 'in' : '='
-      search_read('ir.model', [['model', operator, model_names]], {fields: %w[id name]})
+      optional_params = {fields: %w[id model]}
+      search_read('ir.model', [['model', operator, model_names]], optional_params)
     end
 
     def group_ids(group_names)
       operator = group_names.is_a?(Array) ? 'in' : '='
-      search_read('res.groups', [['name', operator, group_names]], {fields: %w[id name]})
+      optional_params = {fields: %w[id name]}
+      search_read('res.groups', [['name', operator, group_names]], optional_params)
     end
 
     def field_ids(model_name, field_names)
       operator = field_names.is_a?(Array) ? 'in' : '='
       search_read('ir.model.fields', [['name', operator, field_names], ['model', '=', model_name]], {fields: %w[id name]})
-    end
-
-    def model(model_class)
-      model_class = if model_class.is_a?(String)
-                      model_class.constantize
-                    elsif model_class.is_a?(Class)
-                      model_class
-                    end
-
-      model_class.new(self)
     end
 
     def call(model_name, method, *args)
