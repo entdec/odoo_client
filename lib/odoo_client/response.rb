@@ -1,8 +1,6 @@
 module Odoo
   class Response
 
-    ALLOWED_TYPES = Set.new(%w[binary boolean char date datetime float html integer json many2many many2one many2one_reference monetary one2many properties properties_definition reference selection text]).freeze
-
     attr_reader :body, :client, :optional_params
 
     def initialize(client, body, optional_params = {})
@@ -44,12 +42,11 @@ module Odoo
     def fields
       return body["_field_info"] if body["_field_info"].present?
       return nil if @client.blank? || model_name.blank?
-      body["_field_info"] ||= @client.client.call(model_name, 'fields_get', [], {attributes: %w[field_name type required relation]}).filter! { |_, v| ALLOWED_TYPES.include?(v["type"]) }
+      body["_field_info"] = @client.call(model_name, 'fields_get', [], {attributes: %w[field_name type required relation]})
     end
 
     def get_model_name(field_name)
       return nil if field_name.blank?
-
       fields.dig(field_name, "relation") || fields.dig(field_name, "model")
     end
 
